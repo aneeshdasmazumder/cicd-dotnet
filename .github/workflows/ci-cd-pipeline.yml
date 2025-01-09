@@ -8,6 +8,7 @@ on:
     branches:
       - master  # Trigger pipeline on pull request to 'master' branch
 
+      
 jobs:
   build:
     runs-on: ubuntu-latest  # Use Ubuntu for the build environment
