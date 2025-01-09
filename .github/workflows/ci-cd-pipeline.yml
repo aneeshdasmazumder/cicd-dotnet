@@ -3,56 +3,53 @@ name: CI/CD Pipeline for .NET Core App
 on:
   push:
     branches:
-      - master  # Trigger pipeline on push to 'master' branch
+      - master
   pull_request:
     branches:
-      - master  # Trigger pipeline on pull request to 'master' branch
+      - master
 
-      
 jobs:
   build:
-    runs-on: ubuntu-latest  # Use Ubuntu for the build environment
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2  # Checkout the repository
+      uses: actions/checkout@v2
 
     - name: Set up .NET Core
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '8.0.x'  # Set the .NET version
+        dotnet-version: '8.0.x'
+
+    - name: Install SonarScanner .NET Core Global Tool
+      run: dotnet tool install --global dotnet-sonarscanner
 
     - name: Restore dependencies
-      run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj  # Restore NuGet packages for the main app
+      run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
 
     - name: Build the project
-      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release  # Build the project in Release mode
+      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
 
     - name: Run tests
-      run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release  # Run unit tests
+      run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release
 
   sonarQubeAnalysis:
-    runs-on: ubuntu-latest  # Run on Ubuntu
-
-    needs: build  # This job will run after the 'build' job completes
+    runs-on: ubuntu-latest
+    needs: build
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2  # Checkout code again
+      uses: actions/checkout@v2
 
-    - name: Set up SonarQube scanner
-      uses: sonarsource/sonarcloud-github-action@v2  # Latest SonarCloud action
-      with:
-        projectBaseDir: '.'  # Set base directory to the current working directory
-        # Start SonarQube analysis with the project key and token
+    - name: Install SonarScanner .NET Core Global Tool
+      run: dotnet tool install --global dotnet-sonarscanner
+
     - name: Run SonarQube analysis
       run: |
-        dotnet sonarscanner begin /k:"github-actions-learning_cicd" /d:sonar.login=${{ secrets.SONAR_TOKEN }}  
-
+        dotnet sonarscanner begin /o:"aneeshdasmazumder" /k:"aneeshdasmazumder_cicd-dotnet" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token=${{ secrets.SONAR_TOKEN }}
+    
     - name: Build the project for analysis
-      run: dotnet build --configuration Release  # Build the project before running SonarQube analysis
+      run: dotnet build --configuration Release
 
     - name: End SonarQube analysis
-      run: dotnet sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}  # End SonarQube analysis with the token
-
-  # You can add additional jobs for deployment if needed (e.g., AWS, Azure, Docker)
+      run: dotnet sonarscanner end /d:sonar.token=${{ secrets.SONAR_TOKEN }}
