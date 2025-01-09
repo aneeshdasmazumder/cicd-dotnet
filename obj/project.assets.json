@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\TestProject\\cicd\\DotNetCoreApp\\DotNetCoreApp.csproj",
+      "projectUniqueName": "C:\\TestProject\\cicd\\cicd-dotnet\\DotNetCoreApp.csproj",
       "projectName": "DotNetCoreApp",
-      "projectPath": "C:\\TestProject\\cicd\\DotNetCoreApp\\DotNetCoreApp.csproj",
+      "projectPath": "C:\\TestProject\\cicd\\cicd-dotnet\\DotNetCoreApp.csproj",
       "packagesPath": "C:\\Users\\amazumder\\.nuget\\packages\\",
-      "outputPath": "C:\\TestProject\\cicd\\DotNetCoreApp\\obj\\",
+      "outputPath": "C:\\TestProject\\cicd\\cicd-dotnet\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

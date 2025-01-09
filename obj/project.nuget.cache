@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "DxiYp24Ccfg=",
+  "dgSpecHash": "N/rZA6zm+DQ=",
   "success": true,
-  "projectFilePath": "C:\\TestProject\\cicd\\DotNetCoreApp\\DotNetCoreApp.csproj",
+  "projectFilePath": "C:\\TestProject\\cicd\\cicd-dotnet\\DotNetCoreApp.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
