@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+namespace DotNetCoreApp.Controllers;
+
 [ApiController]
 [Route("[controller]")]
 public class HelloController : ControllerBase
