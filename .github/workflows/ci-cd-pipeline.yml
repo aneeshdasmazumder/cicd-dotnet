@@ -49,7 +49,7 @@ jobs:
         dotnet sonarscanner begin /o:"aneeshdasmazumder" /k:"aneeshdasmazumder_cicd-dotnet" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token=${{ secrets.SONAR_TOKEN }}
     
     - name: Build the project for analysis
-      run: dotnet build --configuration Release
+      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
 
     - name: End SonarQube analysis
       run: dotnet sonarscanner end /d:sonar.token=${{ secrets.SONAR_TOKEN }}
