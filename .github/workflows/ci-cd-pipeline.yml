@@ -1,28 +1,31 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for .NET Core App
 
 on:
   push:
     branches:
-      - master
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '7.0'
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Install Dependencies
-        run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj  # Specify the path to the project file
 
-      - name: Build Application
-        run: dotnet build --configuration Release
+    - name: Build the project
+      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release  # Specify the path to the project file
 
-      - name: Run Tests
-        run: dotnet test
+    - name: Run tests
+      run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release  # Specify the test project file
