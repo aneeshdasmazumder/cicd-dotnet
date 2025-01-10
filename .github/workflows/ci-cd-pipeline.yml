@@ -1,5 +1,11 @@
+# Purpose: Defines the name of the GitHub Actions workflow.
+# Why: Helps identify the workflow in the GitHub Actions interface.
 name: CI/CD Pipeline for .NET Core App
 
+#Purpose: Specifies when the workflow should trigger.
+#push: Runs the workflow when changes are pushed to the master branch.
+#pull_request: Runs the workflow for pull requests targeting the master branch.
+#Why: Ensures the pipeline validates changes in the main development branch (master) or during code reviews.
 on:
   push:
     branches:
@@ -8,48 +14,102 @@ on:
     branches:
       - master
 
+
 jobs:
+  #Purpose: Defines a job named build and specifies the operating system (ubuntu-latest) for the runner environment.
+  #Why: A Linux-based environment is cost-effective, fast, and commonly used for CI/CD workflows.
   build:
     runs-on: ubuntu-latest
 
     steps:
+      #Purpose: Checks out the code from the repository into the runner environment.
+      #Why: Allows the workflow to access the source code needed for building, testing, and analysis.
     - name: Checkout code
       uses: actions/checkout@v2
-
+      
+      #Purpose: Sets up the specified version of .NET Core SDK (8.0.x) in the runner environment.
+      #Why: Ensures the correct runtime and SDK are available for building and testing the project.
     - name: Set up .NET Core
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0.x'
 
+      # Purpose: Installs the SonarScanner CLI tool globally for .NET.
+      #  Why: Required to perform static code analysis with SonarQube or SonarCloud.
     - name: Install SonarScanner .NET Core Global Tool
       run: dotnet tool install --global dotnet-sonarscanner
-
+    
+      #Purpose: Restores NuGet packages defined in the project file.
+      #Why: Ensures all dependencies are available for building and testing.
     - name: Restore dependencies
       run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
 
+      #Purpose: Builds the .NET Core project in Release configuration.
+      #Why: Compiles the code, ensuring there are no syntax errors or unresolved dependencies.
     - name: Build the project
       run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
 
+      #Purpose: Executes unit tests in the specified test project.
+      #Why: Validates that the application behaves as expected and prevents regressions.
     - name: Run tests
       run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release
-
+  
+  #Purpose: Defines a job named sonarQubeAnalysis that depends on the build job.
+  #Why: Ensures the build completes successfully before performing SonarQube analysis.
   sonarQubeAnalysis:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
+      #Purpose: Ensures the source code is available for analysis.
+      #Why: Required for SonarScanner to analyze the codebase.
     - name: Checkout code
       uses: actions/checkout@v2
 
+      #Purpose: Installs SonarScanner again in this job context.
+      #Why: Each job runs in isolation, so tools need to be reinstalled.
     - name: Install SonarScanner .NET Core Global Tool
       run: dotnet tool install --global dotnet-sonarscanner
 
+      #Purpose: Configures and starts SonarQube analysis.
+      #/o: Organization ID in SonarCloud (aneeshdasmazumder).
+      #/k: Project key (aneeshdasmazumder_cicd-dotnet).
+      #/d:sonar.host.url: URL for SonarCloud.
+      #/d:sonar.token: Authentication token stored securely in GitHub secrets.
+      #Why: Prepares SonarScanner to analyze the project.
     - name: Run SonarQube analysis
       run: |
         dotnet sonarscanner begin /o:"aneeshdasmazumder" /k:"aneeshdasmazumder_cicd-dotnet" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token=${{ secrets.SONAR_TOKEN }}
     
+      #Purpose: Builds the project again, ensuring analysis captures accurate data.
+      #Why: SonarScanner requires a build process to collect code metrics.
     - name: Build the project for analysis
       run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
 
+      #Purpose: Completes the SonarQube analysis and uploads results to SonarCloud.
+      #Why: Finalizes the scanning process and provides results in the SonarCloud dashboard.
     - name: End SonarQube analysis
       run: dotnet sonarscanner end /d:sonar.token=${{ secrets.SONAR_TOKEN }}
+  dockerDeployment:
+    runs-on: ubuntu-latest
+    needs: [build, sonarQubeAnalysis]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: docker build -t your-dockerhub-username/dotnet-core-app:latest .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest .
+  
+    - name: Push Docker image to Docker Hub
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest
+      
