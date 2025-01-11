@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "ap-south-1"  # Asia Pacific (Mumbai)
+}
+
 resource "aws_s3_bucket" "example" {
   bucket = "my-cicdpipeline-bucket-unique-12345"  # Ensure this is globally unique
 }
