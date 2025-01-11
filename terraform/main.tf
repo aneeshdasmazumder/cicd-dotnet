@@ -3,11 +3,11 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "example" {
-  bucket = "my-cicd-pipeline-bucket" # Replace with a globally unique name
-  acl    = "private"
-
-  tags = {
-    Name        = "my-cicd-pipeline"
-    Environment = "Dev"
-  }
+  bucket = "my-cicdpipeline-bucket"
 }
+
+resource "aws_s3_bucket_acl" "example_acl" {
+  bucket = aws_s3_bucket.example.bucket
+  acl    = "private"
+}
+
