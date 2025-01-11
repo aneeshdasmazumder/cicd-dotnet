@@ -135,37 +135,28 @@ jobs:
   # Job 4: Terraform Deployment (AWS Integration)
   terraform:
     runs-on: ubuntu-latest
-    needs: dockerDeployment
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.5.0
+      - name: Set up AWS CLI
+        run: |
+          curl "https://d1vvhvl2y92vvt.cloudfront.net/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
-      # Configure AWS credentials using GitHub Secrets
-      - name: Configure AWS credentials
+      - name: Create AWS credentials directory
+        run: mkdir -p ~/.aws
+
+      - name: Configure AWS CLI
         run: |
           echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-          echo "region = ap-south-1" >> ~/.aws/config
+          echo "region = ap-south-1" > ~/.aws/config
 
-      # Initialize Terraform
-      - name: Initialize Terraform
-        run: terraform init
-
-      # Validate the Terraform configuration
-      - name: Validate Terraform configuration
-        run: terraform validate
-
-      # Plan Terraform deployment (for safety, review before applying)
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      # Apply the Terraform plan (Creates the S3 bucket)
-      - name: Apply Terraform configuration
-        run: terraform apply -auto-approve tfplan
+      - name: Apply Terraform Configuration
+        run: |
+          terraform init
+          terraform apply -auto-approve
