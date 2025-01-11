@@ -5,8 +5,14 @@ provider "aws" {
 resource "aws_s3_bucket" "example" {
   bucket = "my-cicdpipeline-bucket"
   acl    = "private"  # Set ACL directly here
-
-  # Configure Block Public Access settings
-  block_public_acls = true
-  block_public_policy = true
 }
+
+resource "aws_s3_bucket_public_access_block" "example" {
+  bucket = aws_s3_bucket.example.bucket
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = false
+  restrict_public_buckets = true
+}
+
