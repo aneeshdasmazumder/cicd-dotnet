@@ -1,10 +1,10 @@
-provider "aws" {
-  region = "ap-south-1" # Asia Pacific (Mumbai)
+resource "aws_s3_bucket" "example" {
+  bucket = "my-cicdpipeline-bucket-unique-12345"  # Ensure this is globally unique
 }
 
-resource "aws_s3_bucket" "example" {
-  bucket = "my-cicdpipeline-bucket"
-  acl    = "private"  # Set ACL directly here
+resource "aws_s3_bucket_acl" "example_acl" {
+  bucket = aws_s3_bucket.example.bucket
+  acl    = "private"
 }
 
 resource "aws_s3_bucket_public_access_block" "example" {
@@ -15,4 +15,3 @@ resource "aws_s3_bucket_public_access_block" "example" {
   ignore_public_acls      = false
   restrict_public_buckets = true
 }
-
