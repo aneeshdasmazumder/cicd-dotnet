@@ -1,9 +1,13 @@
-resource "aws_s3_bucket" "example" {
-  bucket = "my-cicdpipeline-bucket-unique-${random_id.bucket_suffix.hex}"  # Ensure unique name
+provider "aws" {
+  region = "ap-south-1"  # Specify your AWS region here
 }
 
 resource "random_id" "bucket_suffix" {
   byte_length = 8
+}
+
+resource "aws_s3_bucket" "example" {
+  bucket = "my-cicdpipeline-bucket-unique-${random_id.bucket_suffix.hex}"  # Ensure unique name
 }
 
 resource "aws_s3_bucket_acl" "example_acl" {
