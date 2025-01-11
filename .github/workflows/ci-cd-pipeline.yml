@@ -157,11 +157,11 @@ jobs:
 
       - name: Terraform init
         run: |
-          cd terraform # Navigate to your Terraform directory
+          cd terraform
           terraform init
     
       - name: Terraform apply
         run: |
-          cd terraform # Navigate to your Terraform directory
+          cd terraform
           terraform apply -auto-approve
 

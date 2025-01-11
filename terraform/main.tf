@@ -1,6 +1,8 @@
 provider "aws" {
-  region = "ap-south-1"  # Asia Pacific (Mumbai)
+  region  = "ap-south-1"
+  version = "~> 3.0"
 }
+
 
 # Create an S3 bucket
 resource "aws_s3_bucket" "example" {
