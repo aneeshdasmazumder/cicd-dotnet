@@ -155,8 +155,13 @@ jobs:
           echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
           echo "region = ap-south-1" > ~/.aws/config
 
-      - name: Apply Terraform Configuration
+      - name: Terraform init
         run: |
+          cd terraform # Navigate to your Terraform directory
           terraform init
+    
+      - name: Terraform apply
+        run: |
+          cd terraform # Navigate to your Terraform directory
           terraform apply -auto-approve
 
