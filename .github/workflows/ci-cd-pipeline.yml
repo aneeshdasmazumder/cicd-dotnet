@@ -100,8 +100,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-
-
       # Purpose: Authenticates with Docker Hub using your credentials.
       # Why: You need to log in to Docker Hub to push your image to your repository.
       # Key Details:
@@ -165,5 +163,5 @@ jobs:
           cd terraform
           terraform apply -auto-approve
         env:
-          TF_LOG: DEBUG
-
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
