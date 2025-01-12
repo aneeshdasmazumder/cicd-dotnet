@@ -2,10 +2,10 @@
 # Why: Helps identify the workflow in the GitHub Actions interface.
 name: CI/CD Pipeline for .NET Core App
 
-#Purpose: Specifies when the workflow should trigger.
-#push: Runs the workflow when changes are pushed to the master branch.
-#pull_request: Runs the workflow for pull requests targeting the master branch.
-#Why: Ensures the pipeline validates changes in the main development branch (master) or during code reviews.
+# Purpose: Specifies when the workflow should trigger.
+# push: Runs the workflow when changes are pushed to the master branch.
+# pull_request: Runs the workflow for pull requests targeting the master branch.
+# Why: Ensures the pipeline validates changes in the main development branch (master) or during code reviews.
 on:
   push:
     branches:
@@ -14,138 +14,115 @@ on:
     branches:
       - master
 
-
 jobs:
-  #Purpose: Defines a job named build and specifies the operating system (ubuntu-latest) for the runner environment.
-  #Why: A Linux-based environment is cost-effective, fast, and commonly used for CI/CD workflows.
+  # Job 1: Build
+  # Purpose: Builds the .NET Core application.
+  # Why: Ensures the application compiles without errors and passes unit tests.
   build:
     runs-on: ubuntu-latest
 
     steps:
-      #Purpose: Checks out the code from the repository into the runner environment.
-      #Why: Allows the workflow to access the source code needed for building, testing, and analysis.
-    - name: Checkout code
-      uses: actions/checkout@v2
-      
-      #Purpose: Sets up the specified version of .NET Core SDK (8.0.x) in the runner environment.
-      #Why: Ensures the correct runtime and SDK are available for building and testing the project.
-    - name: Set up .NET Core
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '8.0.x'
+      # Purpose: Checks out the code from the repository into the runner environment.
+      # Why: Allows the workflow to access the source code needed for building, testing, and analysis.
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # Purpose: Installs the SonarScanner CLI tool globally for .NET.
-      #  Why: Required to perform static code analysis with SonarQube or SonarCloud.
-    - name: Install SonarScanner .NET Core Global Tool
-      run: dotnet tool install --global dotnet-sonarscanner
-    
-      #Purpose: Restores NuGet packages defined in the project file.
-      #Why: Ensures all dependencies are available for building and testing.
-    - name: Restore dependencies
-      run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
+      # Purpose: Sets up the specified version of .NET Core SDK (8.0.x) in the runner environment.
+      # Why: Ensures the correct runtime and SDK are available for building and testing the project.
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '8.0.x'
 
-      #Purpose: Builds the .NET Core project in Release configuration.
-      #Why: Compiles the code, ensuring there are no syntax errors or unresolved dependencies.
-    - name: Build the project
-      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
+      # Purpose: Restores NuGet packages defined in the project file.
+      # Why: Ensures all dependencies are available for building and testing.
+      - name: Restore dependencies
+        run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
 
-      #Purpose: Executes unit tests in the specified test project.
-      #Why: Validates that the application behaves as expected and prevents regressions.
-    - name: Run tests
-      run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release
-  
-  #Purpose: Defines a job named sonarQubeAnalysis that depends on the build job.
-  #Why: Ensures the build completes successfully before performing SonarQube analysis.
+      # Purpose: Builds the .NET Core project in Release configuration.
+      # Why: Compiles the code, ensuring there are no syntax errors or unresolved dependencies.
+      - name: Build the project
+        run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
+
+      # Purpose: Executes unit tests in the specified test project.
+      # Why: Validates that the application behaves as expected and prevents regressions.
+      - name: Run tests
+        run: dotnet test DotNetCoreApp.Tests/DotNetCoreApp.Tests.csproj --configuration Release
+
+  # Job 2: SonarQube Analysis
+  # Purpose: Performs static code analysis using SonarQube.
+  # Why: Ensures code quality and detects potential issues.
   sonarQubeAnalysis:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      #Purpose: Ensures the source code is available for analysis.
-      #Why: Required for SonarScanner to analyze the codebase.
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      #Purpose: Installs SonarScanner again in this job context.
-      #Why: Each job runs in isolation, so tools need to be reinstalled.
-    - name: Install SonarScanner .NET Core Global Tool
-      run: dotnet tool install --global dotnet-sonarscanner
+      - name: Install SonarScanner .NET Core Global Tool
+        run: dotnet tool install --global dotnet-sonarscanner
 
-      #Purpose: Configures and starts SonarQube analysis.
-      #/o: Organization ID in SonarCloud (aneeshdasmazumder).
-      #/k: Project key (aneeshdasmazumder_cicd-dotnet).
-      #/d:sonar.host.url: URL for SonarCloud.
-      #/d:sonar.token: Authentication token stored securely in GitHub secrets.
-      #Why: Prepares SonarScanner to analyze the project.
-    - name: Run SonarQube analysis
-      run: |
-        dotnet sonarscanner begin /o:"aneeshdasmazumder" /k:"aneeshdasmazumder_cicd-dotnet" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token=${{ secrets.SONAR_TOKEN }}
-    
-      #Purpose: Builds the project again, ensuring analysis captures accurate data.
-      #Why: SonarScanner requires a build process to collect code metrics.
-    - name: Build the project for analysis
-      run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
+      - name: Run SonarQube analysis
+        run: |
+          dotnet sonarscanner begin /o:"aneeshdasmazumder" /k:"aneeshdasmazumder_cicd-dotnet" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token=${{ secrets.SONAR_TOKEN }}
+      
+      - name: Build the project for analysis
+        run: dotnet build DotNetCoreApp/DotNetCoreApp.csproj --configuration Release
 
-      #Purpose: Completes the SonarQube analysis and uploads results to SonarCloud.
-      #Why: Finalizes the scanning process and provides results in the SonarCloud dashboard.
-    - name: End SonarQube analysis
-      run: dotnet sonarscanner end /d:sonar.token=${{ secrets.SONAR_TOKEN }}
+      - name: End SonarQube analysis
+        run: dotnet sonarscanner end /d:sonar.token=${{ secrets.SONAR_TOKEN }}
+
+  # Job 3: Docker Deployment
+  # Purpose: Builds and pushes a Docker image to Docker Hub.
+  # Why: Packages the application for deployment in containerized environments.
   dockerDeployment:
     runs-on: ubuntu-latest
     needs: [build, sonarQubeAnalysis]
-    
-    steps:
-      # Purpose: Fetches your code from the GitHub repository into the pipeline environment.
-      # Why: Your pipeline needs access to your project files to build the Docker image.
-    - name: Checkout code
-      uses: actions/checkout@v2
 
-      # Purpose: Authenticates with Docker Hub using your credentials.
-      # Why: You need to log in to Docker Hub to push your image to your repository.
-      # Key Details:
-      # secrets.DOCKER_USERNAME: Securely retrieves your username from GitHub secrets.
-      # secrets.DOCKER_PASSWORD: Securely retrieves your password from GitHub secrets.
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Purpose: Creates a Docker image of your .NET Core app.
-      # Why: Docker images package your app and all its dependencies, making it easy to run on any system.
-      # Key Details:
-      # docker build tells Docker to create an image.
-      # -t secrets.DOCKER_USERNAME/dotnet-core-app:latest assigns a tag (name) to the image:
-      # secrets.DOCKER_USERNAME: Retrieves your Docker Hub username securely.
-      # dotnet-core-app:latest: Specifies the app's name and version (latest means the newest version).
-      # .: Refers to the current directory (where your Dockerfile is located).
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest .
-  
-    # Purpose: Uploads your built image to Docker Hub so it can be accessed publicly or privately.
-    # Why: Allows you (or others) to pull and use your app's Docker image on any system.
-    # Key Details:
-    # docker push: Pushes the tagged image to Docker Hub.
-    # secrets.DOCKER_USERNAME/dotnet-core-app:latest: Specifies the image to push.
-    - name: Push Docker image to Docker Hub
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest
-
-  # Job 4: Terraform Deployment (AWS Integration)
-  terraform:
-    runs-on: ubuntu-latest
-    needs: [build, sonarQubeAnalysis, dockerDeployment]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/dotnet-core-app:latest
+
+  # Job 4: Terraform Deployment (AWS Integration)
+  # Purpose: Deploys the application to AWS using Terraform.
+  # Why: Automates infrastructure provisioning and ensures consistent deployment processes.
+  terraform:
+    runs-on: ubuntu-latest
+    needs: [build, sonarQubeAnalysis, dockerDeployment]
+
+    steps:
+      # Purpose: Checks out the repository code.
+      # Why: Ensures the Terraform configuration files are accessible in the runner environment.
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Purpose: Sets up the specified version of Terraform CLI.
+      # Why: Ensures that the correct version of Terraform is available in the runner environment.
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: '1.4.5' # You can specify the version you need
+          terraform_version: '1.4.5'
 
+      # Purpose: Creates the AWS credentials directory.
+      # Why: Ensures the directory exists for storing AWS credentials needed for authentication.
       - name: Create AWS credentials directory
         run: mkdir -p ~/.aws
 
+      # Purpose: Configures AWS CLI with credentials.
+      # Why: Allows Terraform to authenticate with AWS using the provided credentials.
       - name: Configure AWS CLI
         run: |
           echo "[default]" > ~/.aws/credentials
@@ -153,11 +130,15 @@ jobs:
           echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
           echo "region = ap-south-1" > ~/.aws/config
 
+      # Purpose: Initializes the Terraform configuration.
+      # Why: Prepares the working directory for other Terraform commands by downloading necessary plugins and modules.
       - name: Terraform init
         run: |
           cd terraform
           terraform init
-    
+
+      # Purpose: Applies the Terraform configuration to provision infrastructure.
+      # Why: Automates the creation and management of AWS resources as defined in the configuration files.
       - name: Terraform apply
         run: |
           cd terraform

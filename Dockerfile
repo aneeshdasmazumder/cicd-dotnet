@@ -1,42 +1,35 @@
 # Stage 1: Build the application
-# Purpose: Uses the official .NET SDK image, which includes tools for building and compiling .NET applications.
-# Why Needed: The SDK provides everything necessary to restore, build, and publish the application.
+# Use an official .NET SDK image for building and compiling the application.
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-# Copy csproj and restore dependencies
-# Purpose: Copies the .csproj file to the container and restores dependencies listed in it.
-# Why Needed: Restoring dependencies before copying all files allows Docker to cache this step, saving time in future builds 
-# if the dependencies haven't changed.
+# Copy only the .csproj file(s) and restore dependencies.
+# This step is optimized for caching; Docker will reuse the cache if the project file hasn't changed.
 COPY DotNetCoreApp/*.csproj ./DotNetCoreApp/
 RUN dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
 
-# Copy the remaining files and build the project
-# Purpose:
-#    Copies the source files into the container.
-#    Sets the working directory to where the application resides.
-#    Builds and publishes the application to the out directory.
-# Why Needed: Produces a self-contained, optimized version of the application ready for deployment.
+# Copy the remaining source files into the container.
+# This step is separated to optimize caching when source files change.
 COPY DotNetCoreApp/. ./DotNetCoreApp/
 WORKDIR /app/DotNetCoreApp
-RUN dotnet publish -c Release -o out
+
+# Build and publish the application.
+# Produces an optimized, self-contained application for production.
+RUN dotnet publish -c Release -o out --no-restore
 
 # Stage 2: Create the runtime image
-# Purpose: Uses the official ASP.NET runtime image, which is optimized for running ASP.NET Core applications.
-# Why Needed: The runtime image excludes unnecessary build tools, resulting in a smaller and faster production image.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+# Use the official ASP.NET runtime image, optimized for running ASP.NET Core apps.
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Purpose: Copies the published application files from the build stage into the runtime container.
-# Why Needed: Ensures only the necessary files for running the application are included in the final image.
-COPY --from=build /app/DotNetCoreApp/out ./
+# Copy the published application from the build stage.
+COPY --from=build /app/DotNetCoreApp/out ./out
 
-# Expose the application port
-# Purpose: Opens port 5000 for external access to the application.
-# Why Needed: Makes the application accessible when running the container.
+# Set the user to a non-root user (optional for enhanced security).
+# USER appuser
+
+# Expose the application port.
 EXPOSE 5000
 
-# Define the entry point for the application
-# Purpose: Specifies the command to run when the container starts.
-# Why Needed: Ensures the application (DotNetCoreApp.dll) starts correctly when the container is launched.
-ENTRYPOINT ["dotnet", "DotNetCoreApp.dll"]
+# Define the entry point for the application.
+ENTRYPOINT ["dotnet", "./out/DotNetCoreApp.dll"]
