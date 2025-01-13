@@ -24,26 +24,60 @@ resource "aws_s3_bucket_public_access_block" "example" {
   block_public_policy = false
   restrict_public_buckets = false
   # Purpose: Manage public access settings for the S3 bucket.
-  # Why: Configures the bucket to allow public policies and ACLs, which is necessary for applying the bucket policy.
 }
 
-resource "aws_s3_bucket_policy" "example_bucket_policy" {
-  bucket = aws_s3_bucket.example.id
+# Networking components
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "s3:*"
-        Effect    = "Allow"
-        Resource  = [
-          "${aws_s3_bucket.example.arn}",
-          "${aws_s3_bucket.example.arn}/*"
-        ]
-        Principal = "*"
-      }
-    ]
-  })
-  # Purpose: Define a bucket policy for the S3 bucket.
-  # Why: Allows all actions (s3:*) on the bucket and its contents to any principal (*), effectively making the bucket publicly accessible.
+resource "aws_subnet" "subnet" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-south-1a"
+}
+
+resource "aws_security_group" "db" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# RDS instance
+resource "aws_db_instance" "default" {
+  allocated_storage    = 20
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t2.micro"
+  name                 = "mydatabase"
+  username             = "admin"
+  password             = "password"
+  parameter_group_name = "default.mysql8.0"
+  vpc_security_group_ids = [aws_security_group.db.id]
+  db_subnet_group_name = aws_db_subnet_group.main.name
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = "main"
+  subnet_ids = [aws_subnet.subnet.id]
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.example.bucket
+}
+
+output "db_endpoint" {
+  value = aws_db_instance.default.endpoint
 }
