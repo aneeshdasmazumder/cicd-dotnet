@@ -31,10 +31,16 @@ resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
 
-resource "aws_subnet" "subnet" {
+resource "aws_subnet" "subnet_a" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "ap-south-1a"
+}
+
+resource "aws_subnet" "subnet_b" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "ap-south-1b"
 }
 
 resource "aws_security_group" "db" {
@@ -71,7 +77,7 @@ resource "aws_db_instance" "default" {
 
 resource "aws_db_subnet_group" "main" {
   name       = "main"
-  subnet_ids = [aws_subnet.subnet.id]
+  subnet_ids = [aws_subnet.subnet_a.id, aws_subnet.subnet_b.id]
 }
 
 output "bucket_name" {
