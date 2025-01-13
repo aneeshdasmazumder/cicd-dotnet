@@ -22,15 +22,19 @@ namespace DotNetCoreApp.Tests
 
             using (var context = new AppDbContext(options))
             {
-                var user = new User { Id = 1, Name = "Test User" };
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+
+                var user = new User { Id = 5, Name = "Test User", Email = "test.user@example.com" };
                 context.Users.Add(user);
                 context.SaveChanges();
             }
 
             using (var context = new AppDbContext(options))
             {
-                Assert.Equal(1, context.Users.Count());
-                Assert.Equal("Test User", context.Users.Single().Name);
+                var user = context.Users.Single(u => u.Id == 5);
+                Assert.Equal("Test User", user.Name);
+                Assert.Equal("test.user@example.com", user.Email);
             }
         }
 
@@ -41,16 +45,19 @@ namespace DotNetCoreApp.Tests
 
             using (var context = new AppDbContext(options))
             {
-                var user = new User { Id = 1, Name = "Test User" };
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+
+                var user = new User { Id = 16, Name = "Test User", Email = "test.user@example.com" };
                 context.Users.Add(user);
                 context.SaveChanges();
             }
 
             using (var context = new AppDbContext(options))
             {
-                var user = context.Users.Single();
-                Assert.Equal(1, user.Id);
+                var user = context.Users.Single(u => u.Id == 16);
                 Assert.Equal("Test User", user.Name);
+                Assert.Equal("test.user@example.com", user.Email);
             }
         }
     }

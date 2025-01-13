@@ -36,11 +36,6 @@ jobs:
       
       # Purpose: Restores NuGet packages defined in the project file.
       # Why: Ensures all dependencies are available for building and testing.
-      - name: Clean project
-        run: dotnet clean DotNetCoreApp/DotNetCoreApp.csproj
-
-      # Purpose: Restores NuGet packages defined in the project file.
-      # Why: Ensures all dependencies are available for building and testing.
       - name: Restore dependencies
         run: dotnet restore DotNetCoreApp/DotNetCoreApp.csproj
 

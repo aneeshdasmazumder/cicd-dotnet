@@ -17,7 +17,8 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
-        return await _context.Users.ToListAsync();
+        var users = await _context.Users.ToListAsync();
+        return Ok(users);  // Ensure that Ok(users) is returned
     }
 
     [HttpGet("{id}")]
@@ -25,7 +26,7 @@ public class UsersController : ControllerBase
     {
         var user = await _context.Users.FindAsync(id);
         if (user == null) return NotFound();
-        return user;
+        return Ok(user);  // Ensure that Ok(user) is returned
     }
 
     [HttpPost]
@@ -40,7 +41,13 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> PutUser(int id, User user)
     {
         if (id != user.Id) return BadRequest();
-        _context.Entry(user).State = EntityState.Modified;
+
+        var existingUser = await _context.Users.FindAsync(id);
+        if (existingUser == null) return NotFound();
+
+        existingUser.Name = user.Name;
+        existingUser.Email = user.Email;
+
         await _context.SaveChangesAsync();
         return NoContent();
     }
