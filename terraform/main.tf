@@ -76,7 +76,7 @@ resource "aws_security_group" "db" {
 resource "aws_db_instance" "default" {
   allocated_storage    = 20
   engine               = "mysql"
-  engine_version       = "8.0.26"  # Supported engine version
+  engine_version       = "8.0.34"  # Supported engine version
   instance_class       = "db.t3.micro"  # Supported instance class
   db_name              = "mydatabase"  # Corrected argument name
   username             = "admin"
