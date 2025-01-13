@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DotNetCoreApp.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b630ff073cc20ce659162fefef3c346cd89bd537")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bb57a284ea2bb8386d91b5e3531c64a4b40a07d")]
 [assembly: System.Reflection.AssemblyProductAttribute("DotNetCoreApp.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DotNetCoreApp.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

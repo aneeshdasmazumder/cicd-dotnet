@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DotNetCoreApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c5dc7dcaca6ad296cd892bf27d9009d99b044b0b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bb57a284ea2bb8386d91b5e3531c64a4b40a07d")]
 [assembly: System.Reflection.AssemblyProductAttribute("DotNetCoreApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DotNetCoreApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
