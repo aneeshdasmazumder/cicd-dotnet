@@ -60,6 +60,51 @@ data "aws_subnet" "subnet_b" {
   # Why: Ensures that the resources are created within the specified subnet.
 }
 
+resource "aws_security_group" "app_sg" {
+  vpc_id = data.aws_vpc.existing.id
+  # Purpose: Create a security group in the specified VPC.
+  # Why: Allows control over inbound and outbound traffic for the EC2 instance.
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  # Purpose: Allow inbound traffic on port 22 (SSH).
+  # Why: Ensures that the EC2 instance can be accessed via SSH.
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  # Purpose: Allow inbound traffic on port 80 (HTTP).
+  # Why: Ensures that the application can be accessed via HTTP.
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  # Purpose: Allow all outbound traffic.
+  # Why: Ensures that the EC2 instance can communicate with other services.
+}
+
+resource "aws_instance" "app" {
+  ami           = "ami-0c55b159cbfafe1f0"  # Example AMI ID, replace with a valid one
+  instance_type = "t2.micro"
+  subnet_id     = data.aws_subnet.subnet_a.id
+  security_groups = [aws_security_group.app_sg.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              docker run -d -p 80:80 ${DOCKER_USERNAME}/dotnetcoreapp:latest
+              EOF
+}
+
 resource "aws_security_group" "db" {
   vpc_id = data.aws_vpc.existing.id
   # Purpose: Create a security group in the specified VPC.
@@ -95,13 +140,13 @@ resource "aws_db_instance" "default" {
   password             = "password"
   parameter_group_name = "default.mysql8.0"
   vpc_security_group_ids = [aws_security_group.db.id]
-  db_subnet_group_name = aws_db_subnet_group.main_new_2.name  # Updated name
+  db_subnet_group_name = aws_db_subnet_group.main.name  # Updated name
   # Purpose: Create an RDS instance with the specified configuration.
   # Why: Ensures that the RDS instance is created with the desired settings.
 }
 
-resource "aws_db_subnet_group" "main_new_2" {  # Updated name
-  name       = "main_new_2"  # Updated name
+resource "aws_db_subnet_group" "main" {  # Updated name
+  name       = "main"  # Updated name
   subnet_ids = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_b.id]
   # Purpose: Create a DB subnet group with the specified subnets.
   # Why: Ensures that the RDS instance is created within the specified subnets.
@@ -111,6 +156,10 @@ output "bucket_name" {
   value = aws_s3_bucket.example.bucket
   # Purpose: Output the name of the S3 bucket.
   # Why: Provides the S3 bucket name as an output for reference.
+}
+
+output "app_public_ip" {
+  value = aws_instance.app.public_ip
 }
 
 output "db_endpoint" {
