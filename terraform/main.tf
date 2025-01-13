@@ -26,25 +26,18 @@ resource "aws_s3_bucket_public_access_block" "example" {
   # Purpose: Manage public access settings for the S3 bucket.
 }
 
-# Networking components
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+# Use an existing VPC
+data "aws_vpc" "existing" {
+  id = "vpc-0bb9937060d9b6bf1"
 }
 
-resource "aws_subnet" "subnet_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "ap-south-1a"
-}
-
-resource "aws_subnet" "subnet_b" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "ap-south-1b"
+# Use existing subnets in the VPC
+data "aws_subnet_ids" "existing" {
+  vpc_id = data.aws_vpc.existing.id
 }
 
 resource "aws_security_group" "db" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = data.aws_vpc.existing.id
 
   ingress {
     from_port   = 3306
@@ -77,7 +70,7 @@ resource "aws_db_instance" "default" {
 
 resource "aws_db_subnet_group" "main_new" {  # Updated name
   name       = "main_new"  # Updated name
-  subnet_ids = [aws_subnet.subnet_a.id, aws_subnet.subnet_b.id]
+  subnet_ids = data.aws_subnet_ids.existing.ids
 }
 
 output "bucket_name" {
