@@ -83,11 +83,11 @@ resource "aws_db_instance" "default" {
   password             = "password"
   parameter_group_name = "default.mysql8.0"
   vpc_security_group_ids = [aws_security_group.db.id]
-  db_subnet_group_name = aws_db_subnet_group.main_new.name  # Updated name
+  db_subnet_group_name = aws_db_subnet_group.main_new_2.name  # Updated name
 }
 
-resource "aws_db_subnet_group" "main_new" {  # Updated name
-  name       = "main_new"  # Updated name
+resource "aws_db_subnet_group" "main_new_2" {  # Updated name
+  name       = "main_new_2"  # Updated name
   subnet_ids = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_b.id]
 }
 
