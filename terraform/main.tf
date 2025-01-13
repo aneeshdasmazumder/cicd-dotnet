@@ -32,8 +32,26 @@ data "aws_vpc" "existing" {
 }
 
 # Use existing subnets in the VPC
-data "aws_subnet_ids" "existing" {
-  vpc_id = data.aws_vpc.existing.id
+data "aws_subnet" "subnet_a" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.existing.id]
+  }
+  filter {
+    name   = "availability-zone"
+    values = ["ap-south-1a"]
+  }
+}
+
+data "aws_subnet" "subnet_b" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.existing.id]
+  }
+  filter {
+    name   = "availability-zone"
+    values = ["ap-south-1b"]
+  }
 }
 
 resource "aws_security_group" "db" {
@@ -70,7 +88,7 @@ resource "aws_db_instance" "default" {
 
 resource "aws_db_subnet_group" "main_new" {  # Updated name
   name       = "main_new"  # Updated name
-  subnet_ids = data.aws_subnet_ids.existing.ids
+  subnet_ids = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_b.id]
 }
 
 output "bucket_name" {
