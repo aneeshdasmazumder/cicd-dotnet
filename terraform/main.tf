@@ -29,6 +29,8 @@ resource "aws_s3_bucket_public_access_block" "example" {
 # Use an existing VPC
 data "aws_vpc" "existing" {
   id = "vpc-0bb9937060d9b6bf1"
+  # Purpose: Reference the existing VPC by its ID.
+  # Why: Ensures that the resources are created within the specified VPC.
 }
 
 # Use existing subnets in the VPC
@@ -41,6 +43,8 @@ data "aws_subnet" "subnet_a" {
     name   = "availability-zone"
     values = ["ap-south-1a"]
   }
+  # Purpose: Fetch the subnet in the specified VPC and availability zone.
+  # Why: Ensures that the resources are created within the specified subnet.
 }
 
 data "aws_subnet" "subnet_b" {
@@ -52,10 +56,14 @@ data "aws_subnet" "subnet_b" {
     name   = "availability-zone"
     values = ["ap-south-1b"]
   }
+  # Purpose: Fetch the subnet in the specified VPC and availability zone.
+  # Why: Ensures that the resources are created within the specified subnet.
 }
 
 resource "aws_security_group" "db" {
   vpc_id = data.aws_vpc.existing.id
+  # Purpose: Create a security group in the specified VPC.
+  # Why: Allows control over inbound and outbound traffic for the RDS instance.
 
   ingress {
     from_port   = 3306
@@ -63,6 +71,8 @@ resource "aws_security_group" "db" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  # Purpose: Allow inbound traffic on port 3306 (MySQL).
+  # Why: Ensures that the RDS instance can be accessed on the MySQL port.
 
   egress {
     from_port   = 0
@@ -70,6 +80,8 @@ resource "aws_security_group" "db" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  # Purpose: Allow all outbound traffic.
+  # Why: Ensures that the RDS instance can communicate with other services.
 }
 
 # RDS instance
@@ -84,17 +96,25 @@ resource "aws_db_instance" "default" {
   parameter_group_name = "default.mysql8.0"
   vpc_security_group_ids = [aws_security_group.db.id]
   db_subnet_group_name = aws_db_subnet_group.main_new_2.name  # Updated name
+  # Purpose: Create an RDS instance with the specified configuration.
+  # Why: Ensures that the RDS instance is created with the desired settings.
 }
 
 resource "aws_db_subnet_group" "main_new_2" {  # Updated name
   name       = "main_new_2"  # Updated name
   subnet_ids = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_b.id]
+  # Purpose: Create a DB subnet group with the specified subnets.
+  # Why: Ensures that the RDS instance is created within the specified subnets.
 }
 
 output "bucket_name" {
   value = aws_s3_bucket.example.bucket
+  # Purpose: Output the name of the S3 bucket.
+  # Why: Provides the S3 bucket name as an output for reference.
 }
 
 output "db_endpoint" {
   value = aws_db_instance.default.endpoint
+  # Purpose: Output the endpoint of the RDS instance.
+  # Why: Provides the RDS endpoint as an output for reference.
 }
