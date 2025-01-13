@@ -1,0 +1,4 @@
+# Ignore Visual Studio files
+.vs/
+DotNetCoreApp/.vs/
+DotNetCoreApp.Tests/.vs/
