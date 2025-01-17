@@ -10,9 +10,13 @@ resource "aws_s3_bucket" "example" {
   bucket = "my-cicdpipeline-bucket-unique-${random_id.bucket_suffix.hex}"
 }
 
-resource "aws_vpc" "existing" {
+# Use data block to refer to an existing VPC
+data "aws_vpc" "existing" {
   id = "vpc-0bb9937060d9b6bf1"
 }
+
+# No need for aws_vpc resource here, as the existing VPC is being referenced using the data block.
+
 
 data "aws_subnet" "subnet_a" {
   filter {
