@@ -19,7 +19,7 @@ data "aws_vpc" "existing" {
 data "aws_subnet" "subnet_a" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]  # Corrected to use data.aws_vpc.existing.id
+    values = [data.aws_vpc.existing.id]
   }
   filter {
     name   = "availability-zone"
@@ -30,7 +30,7 @@ data "aws_subnet" "subnet_a" {
 data "aws_subnet" "subnet_b" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]  # Corrected to use data.aws_vpc.existing.id
+    values = [data.aws_vpc.existing.id]
   }
   filter {
     name   = "availability-zone"
@@ -38,8 +38,19 @@ data "aws_subnet" "subnet_b" {
   }
 }
 
+# Retrieve Docker credentials from AWS Secrets Manager
+data "aws_secretsmanager_secret_version" "docker_credentials" {
+  secret_id = "docker_credentials"  # Replace with your Secret Name or ARN
+}
+
+# Parse the Docker username and password from the secret value
+locals {
+  docker_username = jsondecode(data.aws_secretsmanager_secret_version.docker_credentials.secret_string)["docker_username"]
+  docker_password = jsondecode(data.aws_secretsmanager_secret_version.docker_credentials.secret_string)["docker_password"]
+}
+
 resource "aws_security_group" "app_sg" {
-  vpc_id = data.aws_vpc.existing.id  # Corrected to use data.aws_vpc.existing.id
+  vpc_id = data.aws_vpc.existing.id
 
   ingress {
     from_port   = 22
@@ -74,8 +85,8 @@ resource "aws_instance" "app" {
               sudo yum update -y
               sudo yum install docker -y
               sudo service docker start
-              sudo docker login -u "${var.docker_username}" -p "${var.docker_password}"
-              sudo docker run -d -p 80:80 ${var.docker_username}/dotnetcoreapp:latest
+              sudo docker login -u "${local.docker_username}" -p "${local.docker_password}"
+              sudo docker run -d -p 80:80 ${local.docker_username}/dotnetcoreapp:latest
               EOF
 }
 
@@ -85,7 +96,7 @@ resource "aws_db_subnet_group" "main" {
 }
 
 resource "aws_security_group" "db" {
-  vpc_id = data.aws_vpc.existing.id  # Corrected to use data.aws_vpc.existing.id
+  vpc_id = data.aws_vpc.existing.id
 
   ingress {
     from_port   = 3306
