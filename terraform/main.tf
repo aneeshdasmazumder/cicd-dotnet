@@ -15,13 +15,11 @@ data "aws_vpc" "existing" {
   id = "vpc-0bb9937060d9b6bf1"
 }
 
-# No need for aws_vpc resource here, as the existing VPC is being referenced using the data block.
-
-
+# Use the data block references correctly
 data "aws_subnet" "subnet_a" {
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.existing.id]
+    values = [data.aws_vpc.existing.id]  # Corrected to use data.aws_vpc.existing.id
   }
   filter {
     name   = "availability-zone"
@@ -32,7 +30,7 @@ data "aws_subnet" "subnet_a" {
 data "aws_subnet" "subnet_b" {
   filter {
     name   = "vpc-id"
-    values = [aws_vpc.existing.id]
+    values = [data.aws_vpc.existing.id]  # Corrected to use data.aws_vpc.existing.id
   }
   filter {
     name   = "availability-zone"
@@ -41,7 +39,7 @@ data "aws_subnet" "subnet_b" {
 }
 
 resource "aws_security_group" "app_sg" {
-  vpc_id = aws_vpc.existing.id
+  vpc_id = data.aws_vpc.existing.id  # Corrected to use data.aws_vpc.existing.id
 
   ingress {
     from_port   = 22
@@ -66,7 +64,7 @@ resource "aws_security_group" "app_sg" {
 }
 
 resource "aws_instance" "app" {
-  ami           = "ami-0c55b159cbfafe1f0" # Replace with valid AMI
+  ami           = "ami-0c55b159cbfafe1f0"  # Replace with a valid AMI
   instance_type = "t2.micro"
   subnet_id     = data.aws_subnet.subnet_a.id
   security_groups = [aws_security_group.app_sg.name]
@@ -87,7 +85,7 @@ resource "aws_db_subnet_group" "main" {
 }
 
 resource "aws_security_group" "db" {
-  vpc_id = aws_vpc.existing.id
+  vpc_id = data.aws_vpc.existing.id  # Corrected to use data.aws_vpc.existing.id
 
   ingress {
     from_port   = 3306
