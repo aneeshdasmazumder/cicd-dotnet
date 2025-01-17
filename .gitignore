@@ -2,3 +2,4 @@
 .vs/
 DotNetCoreApp/.vs/
 DotNetCoreApp.Tests/.vs/
+terraform.tfvars

@@ -1,75 +1,43 @@
-# Configuring the AWS provider
 provider "aws" {
   region = "ap-south-1"
-  # Purpose: Specify the AWS region where resources will be created.
-  # Why: Terraform needs to know the target AWS region to deploy the infrastructure.
 }
 
-# Generating a random suffix for bucket names
 resource "random_id" "bucket_suffix" {
   byte_length = 8
-  # Purpose: Generate a random suffix for the S3 bucket name.
-  # Why: Ensures S3 bucket names are globally unique to avoid conflicts.
 }
 
-# Creating an S3 bucket
 resource "aws_s3_bucket" "example" {
   bucket = "my-cicdpipeline-bucket-unique-${random_id.bucket_suffix.hex}"
-  # Purpose: Define an S3 bucket resource with a unique name.
-  # Why: S3 buckets are used to store objects like logs, artifacts, and configurations.
 }
 
-# Setting public access controls for the S3 bucket
-resource "aws_s3_bucket_public_access_block" "example" {
-  bucket                  = aws_s3_bucket.example.id
-  block_public_acls       = false
-  ignore_public_acls      = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  # Purpose: Control the public access settings for the S3 bucket.
-  # Why: Allows flexibility in controlling access to the bucket as needed.
-}
-
-# Referencing an existing VPC by ID
-data "aws_vpc" "existing" {
+resource "aws_vpc" "existing" {
   id = "vpc-0bb9937060d9b6bf1"
-  # Purpose: Fetch details of an existing VPC.
-  # Why: Ensures resources are created within the existing network infrastructure.
 }
 
-# Fetching subnet details in the VPC for availability zone "ap-south-1a"
 data "aws_subnet" "subnet_a" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]
+    values = [aws_vpc.existing.id]
   }
   filter {
     name   = "availability-zone"
     values = ["ap-south-1a"]
   }
-  # Purpose: Retrieve a subnet in the specified VPC and availability zone.
-  # Why: Ensures resources are launched in the correct subnet for zone "ap-south-1a".
 }
 
-# Fetching subnet details in the VPC for availability zone "ap-south-1b"
 data "aws_subnet" "subnet_b" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.existing.id]
+    values = [aws_vpc.existing.id]
   }
   filter {
     name   = "availability-zone"
     values = ["ap-south-1b"]
   }
-  # Purpose: Retrieve a subnet in the specified VPC and availability zone.
-  # Why: Ensures resources are launched in the correct subnet for zone "ap-south-1b".
 }
 
-# Creating a security group for the application server
 resource "aws_security_group" "app_sg" {
-  vpc_id = data.aws_vpc.existing.id
-  # Purpose: Create a security group in the specified VPC.
-  # Why: Control inbound and outbound traffic for the EC2 instance hosting the application.
+  vpc_id = aws_vpc.existing.id
 
   ingress {
     from_port   = 22
@@ -77,8 +45,6 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # Purpose: Allow inbound SSH traffic.
-  # Why: Enables remote management of the instance via SSH.
 
   ingress {
     from_port   = 80
@@ -86,8 +52,6 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # Purpose: Allow inbound HTTP traffic.
-  # Why: Ensures the application running on port 80 can be accessed publicly.
 
   egress {
     from_port   = 0
@@ -95,13 +59,10 @@ resource "aws_security_group" "app_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # Purpose: Allow all outbound traffic.
-  # Why: Ensures the instance can communicate with other resources or the internet.
 }
 
-# Creating an EC2 instance to run the application
 resource "aws_instance" "app" {
-  ami           = "ami-0c55b159cbfafe1f0"
+  ami           = "ami-0c55b159cbfafe1f0" # Replace with valid AMI
   instance_type = "t2.micro"
   subnet_id     = data.aws_subnet.subnet_a.id
   security_groups = [aws_security_group.app_sg.name]
@@ -111,23 +72,55 @@ resource "aws_instance" "app" {
               sudo yum update -y
               sudo yum install docker -y
               sudo service docker start
-              sudo docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
-              sudo docker run -d -p 80:80 ${DOCKER_USERNAME}/dotnetcoreapp:latest
+              sudo docker login -u "${var.docker_username}" -p "${var.docker_password}"
+              sudo docker run -d -p 80:80 ${var.docker_username}/dotnetcoreapp:latest
               EOF
-  # Purpose: Launch an EC2 instance with Docker pre-installed.
-  # Why: Hosts the .NET Core application as a Docker container on the EC2 instance.
 }
 
-# Outputting the public IP of the application server
-output "app_public_ip" {
-  value = aws_instance.app.public_ip
-  # Purpose: Provide the public IP address of the EC2 instance.
-  # Why: Allows users to access the deployed application via the internet.
+resource "aws_db_subnet_group" "main" {
+  name       = "main"
+  subnet_ids = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_b.id]
 }
 
-# Outputting the S3 bucket name
+resource "aws_security_group" "db" {
+  vpc_id = aws_vpc.existing.id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_db_instance" "default" {
+  allocated_storage    = 20
+  engine               = "mysql"
+  engine_version       = "8.0.34"
+  instance_class       = "db.t3.micro"
+  db_name              = "mydatabase"
+  username             = "admin"
+  password             = "password"
+  parameter_group_name = "default.mysql8.0"
+  vpc_security_group_ids = [aws_security_group.db.id]
+  db_subnet_group_name = aws_db_subnet_group.main.name
+}
+
 output "bucket_name" {
   value = aws_s3_bucket.example.bucket
-  # Purpose: Provide the name of the created S3 bucket.
-  # Why: Useful for referencing the bucket in logs, tools, or subsequent configurations.
+}
+
+output "app_public_ip" {
+  value = aws_instance.app.public_ip
+}
+
+output "db_endpoint" {
+  value = aws_db_instance.default.endpoint
 }
